@@ -23,29 +23,24 @@ public class FakeStoreApiClient {
 
     // GET - fakestoreapi.com/products/id
     public FakeStoreProductResponseDTO getProductById(Long id) {
-        ResponseEntity<FakeStoreProductResponseDTO> fakeStoreProductResponseDTOResponseEntity =
-                requestForEntity(   FAKE_STORE_API + id,
-                                    HttpMethod.GET,
-                                    null,
-                                    FakeStoreProductResponseDTO.class,
-                                    id);
-        return fakeStoreProductResponseDTOResponseEntity.getBody();
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        return restTemplate.getForEntity(   FAKE_STORE_API + id,
+                                            FakeStoreProductResponseDTO.class).getBody();
     }
 
     // POST - fakestoreapi.com/products
     public FakeStoreProductResponseDTO createProduct(FakeStoreProductRequestDTO fakeStoreProductRequestDTO) {
-        ResponseEntity<FakeStoreProductResponseDTO> fakeStoreProductResponseDTOResponseEntity =
-                requestForEntity(   FAKE_STORE_API,
-                                    HttpMethod.POST,
-                                    fakeStoreProductRequestDTO,
-                                    FakeStoreProductResponseDTO.class);
-        return fakeStoreProductResponseDTOResponseEntity.getBody();
+        RestTemplate restTemplate = restTemplateBuilder.build();
+        return restTemplate.postForEntity(  FAKE_STORE_API,
+                                            fakeStoreProductRequestDTO,
+                                            FakeStoreProductResponseDTO.class).getBody();
     }
 
     // GET - fakestoreapi.com/products
     public FakeStoreProductResponseDTO[] getProducts( ) {
         RestTemplate restTemplate = restTemplateBuilder.build();
-        return restTemplate.getForEntity(FAKE_STORE_API, FakeStoreProductResponseDTO[].class).getBody();
+        return restTemplate.getForEntity(   FAKE_STORE_API,
+                                            FakeStoreProductResponseDTO[].class).getBody();
     }
 
     // PUT - fakestoreapi.com/products/id

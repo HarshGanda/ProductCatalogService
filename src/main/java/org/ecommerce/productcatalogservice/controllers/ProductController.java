@@ -3,6 +3,7 @@ package org.ecommerce.productcatalogservice.controllers;
 import org.ecommerce.productcatalogservice.dtos.CategoryResponseDTO;
 import org.ecommerce.productcatalogservice.dtos.ProductRequestDTO;
 import org.ecommerce.productcatalogservice.dtos.ProductResponseDTO;
+import org.ecommerce.productcatalogservice.exceptions.InvalidIdException;
 import org.ecommerce.productcatalogservice.models.Category;
 import org.ecommerce.productcatalogservice.models.Product;
 import org.ecommerce.productcatalogservice.services.IProductService;
@@ -31,29 +32,32 @@ public class ProductController {
         List<ProductResponseDTO> productResponseDTO = new ArrayList<>();
         List<Product> products = productService.getAllProducts();
         for (Product product : products) {
-            productResponseDTO.add(getProductResponseDTO(product));
+            if (product != null) {
+                productResponseDTO.add(getProductResponseDTO(product));
+            }
         }
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add("called by", "Harsh Ganda");
         headers.add("total products", String.valueOf(productResponseDTO.size()));
         return new ResponseEntity<>(productResponseDTO, headers, HttpStatus.OK);
     }
 
     // Get Product by ID API
     @GetMapping("{id}")
-    public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable("id") Long id) {
+    public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable("id") Long id) throws InvalidIdException {
         try {
             if (id <= 0) {
-                throw new IllegalArgumentException("Invalid ID");
+                throw new InvalidIdException();
             }
             Product product = productService.getProductById(id);
-            ProductResponseDTO productResponseDTO = getProductResponseDTO(product);
+            ProductResponseDTO productResponseDTO = null;
+            if(product != null) {
+                productResponseDTO = getProductResponseDTO(product);
+            }
             MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-            headers.add("called by", "Harsh Ganda");
             headers.add("product id", String.valueOf(id));
             return new ResponseEntity<>(productResponseDTO, headers, HttpStatus.OK);
         }
-        catch (IllegalArgumentException exception) {
+        catch (InvalidIdException exception) {
             throw exception;
         }
     }
@@ -63,57 +67,61 @@ public class ProductController {
     public ResponseEntity<ProductResponseDTO> createProduct(@RequestBody ProductRequestDTO productRequestDTO) {
         Product productRequest = getProduct(productRequestDTO);
         Product product = productService.createProduct(productRequest);
-        ProductResponseDTO productResponseDTO = getProductResponseDTO(product);
+        ProductResponseDTO productResponseDTO = null;
+        if (product != null) {
+            productResponseDTO = getProductResponseDTO(product);
+        }
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add("called by", "Harsh Ganda");
         headers.add("created", "true");
         return new ResponseEntity<>(productResponseDTO, headers, HttpStatus.OK);
     }
 
     // Replace Product API
     @PutMapping("{id}")
-    public ResponseEntity<ProductResponseDTO> replaceProduct(@RequestBody ProductRequestDTO productRequestDTO, @PathVariable("id") Long id) {
+    public ResponseEntity<ProductResponseDTO> replaceProduct(@RequestBody ProductRequestDTO productRequestDTO,
+                                                             @PathVariable("id") Long id) throws InvalidIdException {
         try {
             if (id <= 0) {
-                throw new IllegalArgumentException("Invalid ID");
+                throw new InvalidIdException();
             }
             Product productRequest = getProduct(productRequestDTO);
             Product product = productService.replaceProduct(productRequest, id);
-            ProductResponseDTO productResponseDTO = getProductResponseDTO(product);
+            ProductResponseDTO productResponseDTO = null;
+            if (product != null) {
+                productResponseDTO = getProductResponseDTO(product);
+            }
             MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-            headers.add("called by", "Harsh Ganda");
             headers.add("replaced", "true");
             return new ResponseEntity<>(productResponseDTO, headers, HttpStatus.OK);
         }
-        catch (IllegalArgumentException exception) {
+        catch (InvalidIdException exception) {
             throw exception;
         }
     }
 
     // Delete Product API
     @DeleteMapping("{id}")
-    public ResponseEntity<ProductResponseDTO> deleteProduct(@PathVariable("id") Long id) {
+    public ResponseEntity<ProductResponseDTO> deleteProduct(@PathVariable("id") Long id) throws InvalidIdException {
         try {
             if (id <= 0) {
-                throw new IllegalArgumentException("Invalid ID");
+                throw new InvalidIdException();
             }
-            Product response = productService.deleteProduct(id);
-            ProductResponseDTO productResponseDTO = getProductResponseDTO(response);
+            Product product = productService.deleteProduct(id);
+            ProductResponseDTO productResponseDTO = null;
+            if (product != null) {
+                productResponseDTO = getProductResponseDTO(product);
+            }
             MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-            headers.add("called by", "Harsh Ganda");
             headers.add("deleted", "true");
             return new ResponseEntity<>(productResponseDTO, headers, HttpStatus.OK);
         }
-        catch (IllegalArgumentException exception) {
+        catch (InvalidIdException exception) {
             throw exception;
         }
     }
 
     // Convert Product to ProductResponseDTO
     private ProductResponseDTO getProductResponseDTO(Product product) {
-        if(product == null) {
-            return null;
-        }
         ProductResponseDTO productResponseDTO = new ProductResponseDTO();
         productResponseDTO.setId(product.getId());
         productResponseDTO.setName(product.getName());
@@ -131,9 +139,6 @@ public class ProductController {
 
     // Convert ProductRequestDTO to Product
     private Product getProduct(ProductRequestDTO productRequestDTO) {
-        if(productRequestDTO == null) {
-            return null;
-        }
         Product product = new Product();
         product.setName(productRequestDTO.getName());
         product.setPrice(productRequestDTO.getPrice());
@@ -147,4 +152,5 @@ public class ProductController {
         }
         return product;
     }
+
 }

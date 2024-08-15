@@ -4,6 +4,7 @@ import org.ecommerce.productcatalogservice.dtos.CategoryResponseDTO;
 import org.ecommerce.productcatalogservice.dtos.ProductRequestDTO;
 import org.ecommerce.productcatalogservice.dtos.ProductResponseDTO;
 import org.ecommerce.productcatalogservice.exceptions.InvalidIdException;
+import org.ecommerce.productcatalogservice.exceptions.ProductNotFoundException;
 import org.ecommerce.productcatalogservice.models.Category;
 import org.ecommerce.productcatalogservice.models.Product;
 import org.ecommerce.productcatalogservice.services.IProductService;
@@ -23,7 +24,7 @@ import java.util.List;
 public class ProductController {
 
     @Autowired
-    @Qualifier("fps")
+    @Qualifier("sps")
     private IProductService productService;
 
     // Get List of all the products API
@@ -43,21 +44,21 @@ public class ProductController {
 
     // Get Product by ID API
     @GetMapping("{id}")
-    public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable("id") Long id) throws InvalidIdException {
+    public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable("id") Long id) throws InvalidIdException, ProductNotFoundException {
         try {
             if (id <= 0) {
                 throw new InvalidIdException();
             }
             Product product = productService.getProductById(id);
-            ProductResponseDTO productResponseDTO = null;
-            if(product != null) {
-                productResponseDTO = getProductResponseDTO(product);
+            if(product == null) {
+                throw new ProductNotFoundException();
             }
+            ProductResponseDTO productResponseDTO = getProductResponseDTO(product);
             MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
             headers.add("product id", String.valueOf(id));
             return new ResponseEntity<>(productResponseDTO, headers, HttpStatus.OK);
         }
-        catch (InvalidIdException exception) {
+        catch (InvalidIdException | ProductNotFoundException exception) {
             throw exception;
         }
     }
@@ -67,10 +68,7 @@ public class ProductController {
     public ResponseEntity<ProductResponseDTO> createProduct(@RequestBody ProductRequestDTO productRequestDTO) {
         Product productRequest = getProduct(productRequestDTO);
         Product product = productService.createProduct(productRequest);
-        ProductResponseDTO productResponseDTO = null;
-        if (product != null) {
-            productResponseDTO = getProductResponseDTO(product);
-        }
+        ProductResponseDTO productResponseDTO = getProductResponseDTO(product);
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         headers.add("created", "true");
         return new ResponseEntity<>(productResponseDTO, headers, HttpStatus.OK);
@@ -86,10 +84,7 @@ public class ProductController {
             }
             Product productRequest = getProduct(productRequestDTO);
             Product product = productService.replaceProduct(productRequest, id);
-            ProductResponseDTO productResponseDTO = null;
-            if (product != null) {
-                productResponseDTO = getProductResponseDTO(product);
-            }
+            ProductResponseDTO productResponseDTO = getProductResponseDTO(product);
             MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
             headers.add("replaced", "true");
             return new ResponseEntity<>(productResponseDTO, headers, HttpStatus.OK);
@@ -101,21 +96,21 @@ public class ProductController {
 
     // Delete Product API
     @DeleteMapping("{id}")
-    public ResponseEntity<ProductResponseDTO> deleteProduct(@PathVariable("id") Long id) throws InvalidIdException {
+    public ResponseEntity<ProductResponseDTO> deleteProduct(@PathVariable("id") Long id) throws InvalidIdException, ProductNotFoundException {
         try {
             if (id <= 0) {
                 throw new InvalidIdException();
             }
             Product product = productService.deleteProduct(id);
-            ProductResponseDTO productResponseDTO = null;
-            if (product != null) {
-                productResponseDTO = getProductResponseDTO(product);
+            if(product == null) {
+                throw new ProductNotFoundException();
             }
+            ProductResponseDTO productResponseDTO = getProductResponseDTO(product);
             MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
             headers.add("deleted", "true");
             return new ResponseEntity<>(productResponseDTO, headers, HttpStatus.OK);
         }
-        catch (InvalidIdException exception) {
+        catch (InvalidIdException | ProductNotFoundException exception) {
             throw exception;
         }
     }
@@ -132,6 +127,7 @@ public class ProductController {
             CategoryResponseDTO category = new CategoryResponseDTO();
             category.setId(product.getCategory().getId());
             category.setName(product.getCategory().getName());
+            category.setDescription(product.getCategory().getDescription());
             productResponseDTO.setCategory(category);
         }
         return productResponseDTO;
@@ -146,6 +142,7 @@ public class ProductController {
         product.setDescription(productRequestDTO.getDescription());
         if (productRequestDTO.getCategory() != null) {
             Category category = new Category();
+            category.setId(productRequestDTO.getCategory().getId());
             category.setName(productRequestDTO.getCategory().getName());
             category.setDescription(productRequestDTO.getCategory().getDescription());
             product.setCategory(category);

@@ -19,7 +19,7 @@ public class Product extends BaseModel {
 
     private String imageUrl;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private Category category;
 
 }

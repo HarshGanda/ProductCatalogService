@@ -1,5 +1,6 @@
 package org.ecommerce.productcatalogservice.models;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import lombok.Getter;
